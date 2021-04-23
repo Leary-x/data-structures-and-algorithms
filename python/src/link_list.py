@@ -1,279 +1,240 @@
-import json
+class Node(object):
+    """ Node """
+    def __init__(self, data):
+        self.data = data
+        self.next = None
+
+    def __repr__(self):
+        return self.data
+        
+
+class LinkList(object):
+    """ LinkList """
+    def __init__(self, datas=None):
+        self.head = Node(0)
+        if datas:
+            self.create_by_tail(datas)
+
+    def __repr__(self):
+        """
+        rewrite print string, format like:
+        x->x->x->...->]
+        """
+        p = self.head
+        reprstr = str(p.data) + '->'
+        while p.next:
+            reprstr += str(p.next.data)
+            reprstr += '->'
+            p = p.next
+        reprstr += ']'
+        return reprstr
+
+    def __len__(self):
+        """
+        count the length of the LinkList by go through the list
+        """
+        length = 1
+        p = self.head
+        while p.next:
+            length += 1
+            p = p.next
+        #print length
+        return length
 
 
-# **********************************
-class LinkNode():
+   
 
-    value = ''
-    next = None
-    prev = None
+    def create_by_head(self, datas):
+        """
+        create a LinkList by using data in datas(a list)
+        every data will be added at the head of the list
+        """
+        self.clear()
+        self.head = Node(datas[0])
+        for i in datas[1:]:
+            cur_node = Node(i)
+            cur_node.next = self.head
+            self.head = cur_node
 
-    def __init__(self, value, next=None, prev=None):
-        # constructor
-        self.value = value
-        self.next = next
-        self.prev = prev
+    def create_by_tail(self, datas):
+        """
+        create a LinkList by using data in datas(a list)
+        every data will be added at the tail of the list
+        """
+        self.clear()
+        self.head = Node(datas[0])
+        p = self.head
+        for i in datas[1:]:
+            cur_node = Node(i)
+            p.next = cur_node
+            p = p.next
 
+    def clear(self):
+        """ clear the list """
+        self.head = Node(0)
 
-# **********************************
-class LinkList():
-
-    head = None
-
-    # Function used to compare values (set via constructor)
-    comparison_func = None
-
-    def __init__(self, comparison_func=None):
-        # constructor
-        self.head = None
-        self.comparison_func = comparison_func
-
-
-    def toJSON(self):
-        # dump object to JSON and return as String
-        buf = json.dumps(self, default=lambda o: o.__dict__, indent=0, separators=(',', ': '))
-        buf = buf.replace('\n', ' ').replace('\r', '')
-        return buf
-
-    def toStr(self):
-        # dump list as simple text-list
-        # @TODO This is broken, ever since I made LinkNode hold variant, but TEST use string
-
-        # c,cnt are limiters to make sure we don't go run away
-        # yes, we need cnt=self.count() and not -1, as we walk off list
-        c, cnt = 0, self.count()
-        buf = ''
-        ptr = self.head
-        while ptr is not None:
-            buf = buf + ptr.value + ','
-            ptr = ptr.next
-            c += 1
-            if (c > cnt):
-                raise AssertionError(f'WAIT!!! Forever Loop!\nRecursive LinkList/Node\nbuf:[{buf}]')
-
-        if buf.endswith(','):
-            buf = buf[:-1]
-        return buf
-
-    def insert(self, value):
-        # insert value at the head of the list
-        node = LinkNode(value, self.head)
-        node.next = self.head
-        self.head = node
-
-    def get(self, value):  # -> Any:
-        # traverse list and determine if a value exist
-
-        cur = self.head
-        while cur is not None:
-            if self.comparison_func is not None:
-                if self.comparison_func(cur.value, value):
-                    return cur.value
-            else:
-                if cur.value == value:
-                    return cur.value
-            cur = cur.next
-
-        raise Exception('Not found.')
-
-    def includes(self, value):
-        # traverse list and determine if a value exists
-        # return bool
-        ret = False
-        cur = self.head
-        while cur is not None:
-
-            if self.comparison_func is not None:
-                if self.comparison_func(cur.value, value):
-                    ret = True
-                    break
-            else:
-                if cur.value == value:
-                    ret = True
-                    break
-
-            cur = cur.next
-        return ret
-
-    def count(self):
-        # count the number of nodes and return count
-        cnt = 0
-        cur = self.head
-        while cur is not None:
-            cnt += 1
-            cur = cur.next
-        return cnt
-
-    def append(self, value) -> bool:
-        # adds a new node with the given value to the end of the list
-        # BigO == O(n)
-
-        # walk to end of list
-        prev, cur = None, self.head
-        while cur is not None:
-            prev = cur
-            cur = cur.next
-
-        # create the node and add it to the end
-        node = LinkNode(value, None)
-        if (prev == None):
-            self.head = node
+    def is_empty(self):
+        """ whether the list is empty """
+        if len(self) == 0:
+            print "True"
+            return True
         else:
-            prev.next = node
+            print "False"
+            return False
 
-        return True
-
-    def peekHead(self) -> [bool, str]:
-        retStr = ''
-        retBool = False
-        if self.head is not None:
-            retStr = self.head.value
-            retBool = True
-        return [retBool, retStr]
-
-
-    def remove(self, value) -> bool:
-        # removes a node from a list, given a specific value
-        # BigO == O(n*2) ... I could eliminate self.includes(), but I think it's more readable
-        # NOTE: only the first one found will be removed
-
-        ret = False
-        if self.includes(value):
-            prev, cur = None, self.head
-            while cur is not None:
-
-                found = False
-                if self.comparison_func is not None:
-                    if self.comparison_func(cur.value, value):
-                        found = True
-                elif cur.value == value:
-                    found = True
-
-                if found:
-                    if prev is None:
-                        self.head = cur.next
-                    else:
-                        prev.next = cur.next
-                    ret = True
-                    break
-
-                prev = cur
-                cur = cur.next
-
-        return ret
-
-    def insertBefore(self, targetVal: int, newVal: str, afterInstead=False):
-        # add a new node with the given newValue immediately BEFORE the node containg targetVal
-        # note: this bevahoir can be modified by the bool afterInstead
-        # BigO == O(n)
-
-        # walk the list to find it or the end
-        found = False
-        prev, cur = None, self.head
-        while cur is not None:
-            if cur.value == targetVal:
-                found = True
-                break
-            prev = cur
-            cur = cur.next
-
-        # if found, put it in the chain, as a link right before the node containing value
-        if found:
-            node = LinkNode(newVal)
-            if afterInstead:
-                node.next = cur.next
-                cur.next = node
+    def getData_by_index(self, index):
+        """
+        :param index: position of the node in the list.
+        :return: the data on the index of False if not exist.
+        """
+        count = 0
+        p = self.head
+        while p.next:
+            if count == index:
+                return p.data
             else:
-                node.next = cur
-                if prev is None:  # edge-case, if the targetVal is first node
-                    self.head = node
+                p = p.next
+                count += 1
+
+        return False
+
+    def getData_by_value(self, value):
+        """
+        :param index: value of the node in the list.
+        :return: position of the first data that fit the value 
+            or False if not exist.
+        """
+        count = 0
+        p = self.head
+        while p.next:
+            if p.data == value:
+                return count
+            else:
+                p = p.next
+                count += 1
+        return False
+
+    def insertData(self, index, data):
+        """
+        :param index: the position to insert data to.
+        :param data: the data to insert into list.
+        :return: True or False.
+        """
+        count = 1
+        p = self.head
+        while p.next:
+            if count == index:
+                new_node = Node(data)
+                new_node.next = p.next
+                p.next = new_node
+                p = p.next
+                return True
+            else:
+                p = p.next
+                count += 1
+        return False
+
+    def deleteData_by_index(self, index):
+        """
+        :param index: position of the node to delete.
+        :return: True or False.
+        """
+        count = 1
+        p = self.head
+        while p.next:
+            if count == index:
+                p.next = p.next.next
+                p = p.next
+                print self
+                return True
+            else:
+                p = p.next
+                count += 1
+        return False
+
+    def deleteData_by_value(self, value):
+        """
+        :param index: value of the node to delete.
+        :return: True or False.
+        """
+        count = 0
+        p = self.head
+        while p.next:
+            if p.next.data == value:
+                p.next = p.next.next
+                p = p.next
+                # print self
+                return True
+            else:
+                p = p.next
+                count += 1
+        return False
+
+    def delete_repeat(self):
+        """
+        delete repeat node in list
+        """
+        p = self.head #p for go through list from head one by one
+        while p:
+            q = p #q for modify list
+            r = p.next #r for go through and compare with p 
+            while r:
+                if r.data == p.data:
+                    q.next = r.next
+                    r = q.next
+                    # print 'delete:' + p.data
                 else:
-                    prev.next = node
+                    q = r
+                    r = r.next
+            p = p.next
 
-        return found
+    def delete_one(self, value):
+        """
+        delete all node of the value in list
+        """
+        # while self.getData_by_value(value):
+        #     self.deleteData_by_value(value)
+        p = self.head
+        q = p.next
+        while q:
+            if q.data == value:
+                p.next = q.next
+                q = p.next
+            else:
+                p = q
+                q = q.next
 
-    def insertAfter(self, targetVal: int, newVal: str):
-        # add a new node with the given newValue immediately AFTER the node containg targetVal
-        # BigO == O(n)
-        return self.insertBefore(targetVal, newVal, True)
-
-    def traverse(self, action_func):
-        # traverse the linklist and call the action_func with the value
-        cur = self.head
-        while cur:
-            action_func(cur.value)
-            cur = cur.next
-
-    def kthFromEnd(self, k):
-        # finds the Kth element from the end of the list and returns value for node
-        # BigO == O(n)
-
-        # Only positive integers
-        if k < 0:
-            raise AssertionError(f'WAIT!!! You must pass a positive integer, k:[{k}]')
-
-        ptrA = self.head
-        ptrB = self.head
-
-        # Walk ptrA out to "K" elements
-        tooSmall = False
-        c = 0
-        while c < k-1:
-            if ptrA.next is None:
-                tooSmall = True
-                break
-            ptrA = ptrA.next
-            c += 1
-        if tooSmall:
-            raise AssertionError(f'WAIT!!! There are not enough elements in the link list for k:[{k}].')
-
-        # Walk ptrA and ptrB out to the end of the list
-        # ptrB will point to our requested node
-        # note: for short lengths where the value is found before k elements, we are going to skip walking
-        # ptrB until the difference between it and ptrA is "k"
-        while ptrA.next is not None:
-            ptrA = ptrA.next
-            if c >= k:
-                ptrB = ptrB.next
-            c += 1
-
-        return ptrB.value
-
-
-    def mergeList(self, listA, listB):
-        # Merge two lists
-        # BigO == O(n)
-
-        ptrA = listA.head
-        ptrB = listB.head
-
-        while ptrA is not None or ptrB is not None:
-            if ptrA is not None:
-                prev = ptrA
-                ptrA = ptrA.next
-                prev.next = ptrB
-            if ptrB is not None:
-                prev = ptrB
-                ptrB = ptrB.next
-                prev.next = ptrA
-
-        return listA
-
-
-if __name__ == "__main__":
-
-    listA = LinkList()
-    listA.append('apple')
-    listA.append('bannana')
-    listA.append('orange')
-
-    listB = LinkList()
-    listB.append('cheerios')
-    listB.append('frosted flakes')
-    listB.append('wheaties')
-
-    expected = 'apple,cheerios,bannan,frosted flakes,orange,wheaties'
-    listA.mergeList(listA, listB)
-    actual = listA.toStr()
-
-    print(f'actual:[{actual}]')
+def merge_linklist(list_a, list_b):
+    """
+    merge two ordered list to a new list
+    """
+    a = list_a.head
+    b = list_b.head
+    list_c = LinkList()
+    if a.data > b.data:
+        list_c.head = b
+        b = b.next
+    else:
+        list_c.head = a
+        a = a.next
+    c = list_c.head
+    while a and b:
+        if a.data > b.data:
+            c.next = b
+            c = b
+            b = b.next
+        elif a.data < b.data:
+            c.next = a
+            c = a
+            a = a.next
+        elif a.data == b.data:
+            c.next = a
+            c = a
+            a = a.next
+            b = b.next
+            # list_b.deleteData_by_value(b.data)
+    if a:
+        c.next = a
+    else:
+        c.next = b
+    return list_c
